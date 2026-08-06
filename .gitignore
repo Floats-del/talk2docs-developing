@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+G_Env/
+venv/
+.env
+
+# IDE
+.vscode/
+
+# Testing
+.pytest_cache/
+
+# Alembic cache
+*.pyc
+
+dump.rdb
+
+notes/info.txt
