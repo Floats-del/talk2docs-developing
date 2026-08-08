@@ -1,446 +1,653 @@
 # Talk2Docs
 
-> Production-ready AI Document Platform built with FastAPI, Celery, Docling, LangChain, ChromaDB, PostgreSQL, and Redis.
+> **Production-oriented AI document processing and RAG backend built with FastAPI, Celery, Docling, LangChain, ChromaDB, PostgreSQL, and Redis.**
 
-Talk2Docs is an asynchronous AI backend that allows users to upload documents, automatically parse, chunk, embed, and index them for Retrieval-Augmented Generation (RAG).
+Talk2Docs is an asynchronous AI document platform designed to turn uploaded documents into searchable, user-isolated knowledge for Retrieval-Augmented Generation (RAG).
 
-Unlike a simple "Chat with PDF" project, Talk2Docs is designed with production-ready architecture, scalability, and maintainability in mind.
+The system separates HTTP request handling from computationally expensive document processing using **Celery workers**, while PostgreSQL tracks document state and ChromaDB stores vector representations.
 
----
-
-# Features
-
-- 📄 Document Upload API
-- ⚡ Asynchronous Processing with Celery
-- 📚 Docling Document Parsing
-- ✂️ Hybrid Semantic Chunking
-- 🧠 Embedding Generation
-- 🔍 Chroma Vector Database
-- 🔐 JWT Authentication
-- 🐘 PostgreSQL Metadata Storage
-- 🚀 Redis Task Queue
-- 📈 Background Processing
-- 🛡 Rate Limiting
-- 📝 Structured Logging
-- ⚠️ Centralized Exception Handling
-- 🔄 Async SQLAlchemy
-- 🗄 Alembic Migrations
-- 🤖 AI-ready Retrieval Pipeline
+The goal is not simply to build a "Chat with PDF" application, but to build a backend that can evolve into a scalable AI document platform.
 
 ---
 
-# Architecture
+# ✨ Features
 
-```
-                Upload Document
-                       │
-                       ▼
-             FastAPI Validation
-                       │
-                       ▼
-          Celery Worker 1 (Upload)
-      ─────────────────────────────────
-      • Save file
-      • Store metadata
-      • Create database record
-      • Queue Worker 2
-                       │
-                       ▼
-         Celery Worker 2 (Processing)
-      ─────────────────────────────────
-      • Parse document using Docling
-      • Hybrid Chunking
-      • Generate embeddings
-      • Store vectors in ChromaDB
-      • Update processing status
-                       │
-                       ▼
-              Document Ready
-```
+* 📄 Asynchronous document upload
+* ⚡ Celery background processing
+* 📚 Docling document parsing
+* ✂️ Structure-aware document chunking
+* 🧠 Embedding generation
+* 🔍 ChromaDB vector storage
+* 🔐 JWT authentication
+* 🐘 PostgreSQL metadata storage
+* 🚀 Redis broker/result backend
+* 📊 Document processing state tracking
+* 🔄 Async SQLAlchemy
+* 🛡 Rate limiting
+* 📝 Structured logging
+* ⚠️ Centralized exception handling
+* 🗃 Alembic database migrations
+* 🔒 User-isolated document retrieval
+* 🤖 RAG-ready retrieval architecture
 
 ---
 
-# Tech Stack
+# 🏗 Architecture
 
-## Backend
+Talk2Docs separates the API request lifecycle from heavy document-processing workloads.
 
-- FastAPI
-- Python 3.12+
-- SQLAlchemy Async
-- Pydantic v2
-- Alembic
-
-## AI
-
-- Docling
-- LangChain
-- ChromaDB
-- Sentence Transformers
-- HybridChunker
-
-## Infrastructure
-
-- Redis
-- Celery
-- PostgreSQL
-- Nginx
-
-## Authentication
-
-- JWT
-- OAuth2PasswordBearer
-
-## Utilities
-
-- SlowAPI
-- filetype
-- Structured Logging
-
----
-
-# Folder Structure
-
-```
-Ai/
-    main.py
-    retry_logic.py
-    intent_classifier.py
-
-celery_worker/
-    celery_app.py
-    Tasks/
-        Ai_worker/
-        embedding_worker.py
-        ingestion_worker.py
-        chat_worker.py
-
-routers/
-    Ai/
-    auth/
-    users/
-
-db_tables/
-
-docling/
-
-vector_db/
-
-core/
-    Exceptions/
-    rate_limiters/
-
-utils/
-
-alembic/
-
-nigx/
+```text
+                    Client
+                      │
+                      ▼
+                FastAPI API
+                      │
+                      ▼
+              File Validation
+                      │
+                      ▼
+              Upload Worker
+                      │
+          ┌───────────┴───────────┐
+          │                       │
+          ▼                       ▼
+     Save File              PostgreSQL
+          │                  Metadata
+          │
+          ▼
+          Processing Worker
+                │
+                ▼
+             Docling
+                │
+                ▼
+             Chunking
+                │
+                ▼
+            Embeddings
+                │
+                ▼
+             ChromaDB
+                │
+                ▼
+          Document Ready
 ```
 
----
-
-# Processing Pipeline
-
-## 1. Validation
-
-Every uploaded document is validated for:
-
-- File extension
-- MIME type
-- Magic bytes (actual file signature)
-- Maximum file size
-
-Invalid files never reach the worker queue.
+The API does not perform expensive parsing, chunking, or embedding work directly inside the request lifecycle.
 
 ---
 
-## 2. Storage
+# 🔄 Document Processing Pipeline
 
-Worker 1:
+## 1. File Validation
 
-- Saves the uploaded file
-- Creates metadata
-- Inserts a database record
-- Dispatches Worker 2
+Before a document reaches Celery, the upload service validates:
 
----
+* File name
+* File extension
+* MIME type
+* File size
+* File signatures / magic bytes
+* User identity
 
-## 3. Parsing
-
-Worker 2 converts the document into a structured DoclingDocument.
-
-Supported formats include:
-
-- PDF
-- DOCX
-- PPTX
-- and more...
+Invalid files are rejected before entering the background-processing pipeline.
 
 ---
 
-## 4. Chunking
+## 2. Upload Worker
 
-HybridChunker intelligently splits documents into semantic chunks while preserving context and structure.
+The first Celery worker is responsible for persisting the validated upload.
 
----
+It:
 
-## 5. Embedding
+1. Receives the validated payload.
+2. Saves the file to storage.
+3. Creates the `Document` database record.
+4. Commits the metadata.
+5. Passes the resulting document metadata to the processing worker.
 
-Each chunk is converted into a LangChain Document and embedded using a Sentence Transformer model.
-
----
-
-## 6. Vector Storage
-
-Embeddings are stored inside ChromaDB.
-
-Each chunk stores metadata such as:
-
-- Document ID
-- Request ID
-- User ID
-- Original Filename
+The API immediately returns a Celery `task_id` instead of waiting for the document-processing pipeline to finish.
 
 ---
 
-# Document Lifecycle
+## 3. Document Processing Worker
 
+The processing worker performs the expensive document operations:
+
+```text
+Document
+   │
+   ▼
+Docling Parsing
+   │
+   ▼
+Chunking
+   │
+   ▼
+Embedding Generation
+   │
+   ▼
+ChromaDB
 ```
+
+Each stage has its own exception handling and failure tracking.
+
+---
+
+## 4. Processing Status
+
+PostgreSQL acts as the persistent source of truth for document processing state.
+
+The document lifecycle is tracked independently from Celery's task state.
+
+```text
 UPLOADED
-
-↓
-
-PARSED
-
-↓
-
-CHUNKED
-
-↓
-
+   │
+   ▼
+PROCESSING
+   │
+   ├── PARSE
+   ├── CHUNK
+   └── EMBED
+   │
+   ▼
 READY
 ```
 
-If an error occurs:
+If a processing stage fails:
 
+```text
+FAILED
+   │
+   └── failure_reason
 ```
+
+This allows the system to retain useful information even after the Celery task has completed or exhausted its retries.
+
+---
+
+# 📡 Worker Status & Polling
+
+Uploads are asynchronous, so clients can poll the worker status endpoint:
+
+```text
+GET /upload_worker/{task_id}/{request_id}
+```
+
+The endpoint combines two sources of information:
+
+### Redis / Celery
+
+Used for transient worker execution state:
+
+```text
+PENDING
+STARTED
+RETRY
+SUCCESS
+FAILURE
+```
+
+### PostgreSQL
+
+Used for persistent document state:
+
+```text
+PENDING_SAVE
+UPLOADED
+PROCESSING
+READY
 FAILED
 ```
 
-along with a stored failure reason for debugging.
+This distinction is intentional.
 
----
+**Celery tells us what the worker is doing.**
 
-# API Philosophy
+**PostgreSQL tells us what happened to the document.**
 
-Routes remain intentionally thin.
+The polling response combines both.
 
-```
-Route
-
-↓
-
-Validation
-
-↓
-
-Service
-
-↓
-
-Celery
-
-↓
-
-Database
+```json
+{
+    "worker": {
+        "status": "processing",
+        "task_id": "...",
+        "state": "STARTED"
+    },
+    "document": {
+        "status": "UPLOADED",
+        "failure_reason": null
+    }
+}
 ```
 
-Business logic is isolated from HTTP endpoints, making the project easier to maintain and extend.
+If polling occurs before Worker 1 has created the database record, the document status is reported as:
+
+```text
+PENDING_SAVE
+```
+
+rather than incorrectly treating the document as missing.
 
 ---
 
-# Database
+# 🧠 Retrieval Architecture
 
-PostgreSQL stores:
+Once documents have been indexed, Talk2Docs can retrieve only the information belonging to the requesting user.
 
-- Users
-- Documents
-- Metadata
-- Processing Status
-- Collection Information
+The planned retrieval pipeline is:
 
-Vectors are stored separately in ChromaDB.
+```text
+User Query
+    │
+    ├───────────────┐
+    ▼               ▼
+Vector Search     BM25 Search
+    │               │
+    └───────┬───────┘
+            ▼
+       Hybrid Retrieval
+            │
+            ▼
+       Result Fusion
+            │
+            ▼
+          Top-K
+            │
+            ▼
+       AI Context
+```
 
----
+Document metadata contains identifiers such as:
 
-# Celery Workers
+* `user_id`
+* `document_id`
+* `request_id`
+* `collection_name`
 
-Current workers:
-
-- Upload Worker
-- Parsing Worker
-
-Planned workers:
-
-- Embedding Worker
-- Retrieval Worker
-- Chat Worker
-- Cleanup Worker
-
-Workers communicate using serialized payloads, making them scalable and independent.
-
----
-
-# Security
-
-- JWT Authentication
-- Rate Limiting
-- MIME Verification
-- Magic Byte Validation
-- Structured Exception Handling
-- Async Database Operations
+User-level metadata filtering is used to maintain document isolation during retrieval.
 
 ---
 
-# Current Progress
+# 🛠 Tech Stack
 
-- ✅ Authentication
-- ✅ Upload API
-- ✅ Validation Pipeline
-- ✅ PostgreSQL Integration
-- ✅ Redis Integration
-- ✅ Celery Workers
-- ✅ Docling Parsing
-- ✅ Hybrid Chunking
-- ✅ ChromaDB Integration
-- ✅ Processing Status Tracking
-- ✅ Structured Error Handling
+## Backend
 
----
+* Python 3.12+
+* FastAPI
+* Pydantic v2
+* SQLAlchemy Async
+* Alembic
 
-# Planned Features
+## Document Processing
 
-## Retrieval
+* Docling
+* HybridChunker
 
-- Hybrid Search
-- Vector Search
-- BM25 Retrieval
-- Reciprocal Rank Fusion (RRF)
+## AI / RAG
 
----
-
-## AI
-
-- Chat with Documents
-- Multi-turn Conversations
-- Source Citation
-- Query Expansion
-- Query Rewriting
-
----
-
-## Multi-user Support
-
-- User Collections
-- Workspace Isolation
-- Permission Management
-
----
-
-## Workspace
-
-- Multiple Documents
-- Folder Management
-- Collection Support
-
----
+* LangChain
+* Sentence Transformers
+* ChromaDB
+* Vector Retrieval
+* BM25 Retrieval
+* Hybrid Retrieval
 
 ## Background Processing
 
-- Task Progress Tracking
-- Retry Policies
-- Queue Priorities
-- Worker Monitoring
+* Celery
+* Redis
+
+## Database
+
+* PostgreSQL
+
+## Authentication & Security
+
+* JWT
+* OAuth2PasswordBearer
+* SlowAPI rate limiting
+* MIME validation
+* File signature validation
+* User-scoped document access
+
+## Infrastructure
+
+* Nginx
 
 ---
 
-## OCR
+# 📁 Project Structure
 
-Support for:
-
-- Images
-- Scanned PDFs
-
----
-
-## Future AI Features
-
-- AI Summarization
-- Keyword Extraction
-- Entity Recognition
-- Semantic Search
-- Automatic Document Titles
-- AI Notes
-- Flashcard Generation
-- Quiz Generation
-
----
-
-# Roadmap
-
-## Phase 1
-
-- Upload
-- Parse
-- Chunk
-- Embed
-- Index
-
-## Phase 2
-
-- Hybrid Retrieval
-- Chat Endpoint
-
-## Phase 3
-
-- Conversation Memory
-- Session Management
-
-## Phase 4
-
-- Streaming Responses
-
-## Phase 5
-
-- Docker
-- Kubernetes
-- CI/CD
-- Monitoring
-- Production Deployment
+```text
+Talk2Docs/
+│
+├── Ai/
+│   ├── main.py
+│   ├── retry_logic.py
+│   └── intent_classifier.py
+│
+├── celery_worker/
+│   ├── celery_app.py
+│   └── Tasks/
+│       ├── Ai_worker/
+│       ├── embedding_worker.py
+│       ├── ingestion_worker.py
+│       └── chat_worker.py
+│
+├── routers/
+│   ├── Ai/
+│   ├── auth/
+│   └── users/
+│
+├── db_tables/
+│
+├── docling/
+│
+├── vector_db/
+│
+├── core/
+│   ├── Exceptions/
+│   └── rate_limiters/
+│
+├── utils/
+│
+├── alembic/
+│
+└── nigx/
+```
 
 ---
 
-# Design Philosophy
+# 🗄 Database
 
-Talk2Docs is built around a production-first architecture.
+PostgreSQL stores persistent application and document metadata.
 
-Instead of processing everything inside a single request, computationally expensive operations are delegated to asynchronous Celery workers. Each worker has a single responsibility and communicates through serialized payloads.
+The `Document` model tracks information such as:
 
-This approach makes the system easier to scale, monitor, and extend while keeping API responses fast and reliable.
+* Document ID
+* User ID
+* Request ID
+* Original filename
+* Stored filename
+* File path
+* File extension
+* MIME type
+* File size
+* Collection name
+* Chunk count
+* Processing status
+* Failure reason
+* Embedding model
+* File hash
+* Upload timestamp
+* Processing timestamp
 
-The project emphasizes:
-
-- Clean Architecture
-- Thin Routes
-- Async Processing
-- Fault Tolerance
-- Scalable AI Pipelines
+Vector embeddings are stored separately in ChromaDB.
 
 ---
 
-# License
+# 🔐 Security & Isolation
+
+Talk2Docs treats uploaded documents as user-owned resources.
+
+The system uses:
+
+* JWT authentication
+* User-scoped database queries
+* User-scoped vector retrieval
+* Rate limiting
+* File extension validation
+* MIME validation
+* Magic-byte validation
+* Maximum upload size limits
+* Centralized exception handling
+
+For example, document lookup is scoped by both:
+
+```text
+request_id
++
+authenticated user_id
+```
+
+This prevents a user from retrieving another user's document simply by knowing its request ID.
+
+---
+
+# ⚠️ Error Handling
+
+Application-level failures use custom exceptions derived from a common application exception hierarchy.
+
+Examples include:
+
+```text
+DocumentNotFoundException
+SavingValidatedFileException
+ParsingSavedFileException
+ChunkingParsedFileException
+EmbeddingChunkedFileException
+InvalidTask1PayloadException
+InvalidTask2PayloadException
+```
+
+Worker failures are separated from HTTP request failures.
+
+The API request can finish successfully while background processing continues independently.
+
+Celery retries transient failures according to worker-specific retry policies.
+
+---
+
+# 🔁 Worker Design
+
+Workers communicate using serialized payloads rather than passing ORM objects between processes.
+
+The current upload pipeline follows:
+
+```text
+FastAPI
+   │
+   ▼
+Task 1
+   │
+   ├── Save file
+   ├── Create Document
+   └── Start Task 2
+             │
+             ▼
+          Task 2
+             │
+             ├── Parse
+             ├── Chunk
+             └── Embed
+```
+
+This keeps workers independently executable and avoids coupling Celery tasks to SQLAlchemy session state.
+
+---
+
+# 🧱 API Design Philosophy
+
+Routes are intentionally kept thin.
+
+```text
+HTTP Route
+    │
+    ▼
+Service Layer
+    │
+    ▼
+Celery Worker
+    │
+    ▼
+Database / Vector Store
+```
+
+The API layer is responsible for:
+
+* Request handling
+* Authentication
+* Validation
+* Rate limiting
+* Starting workers
+* Returning worker status
+
+Business logic lives in services and worker tasks.
+
+---
+
+# 📈 Current Progress
+
+### Core Backend
+
+* ✅ FastAPI application
+* ✅ Async SQLAlchemy
+* ✅ PostgreSQL
+* ✅ Alembic migrations
+* ✅ JWT authentication
+* ✅ Redis integration
+* ✅ Celery integration
+* ✅ Rate limiting
+* ✅ Centralized exception handling
+* ✅ Structured logging
+
+### Document Pipeline
+
+* ✅ File validation
+* ✅ File storage
+* ✅ Document metadata persistence
+* ✅ Asynchronous upload worker
+* ✅ Document processing worker
+* ✅ Docling parsing
+* ✅ Document chunking
+* ✅ Embedding generation
+* ✅ ChromaDB indexing
+* ✅ Processing status tracking
+* ✅ Celery retry handling
+* ✅ Redis + PostgreSQL worker status polling
+
+### Retrieval
+
+* 🚧 Global retrieval helper
+* 🚧 Hybrid retrieval
+* 🚧 BM25 + vector search
+* 🚧 Result fusion
+* 🚧 Top-K context generation
+* 🚧 RAG prompt integration
+
+---
+
+# 🗺 Roadmap
+
+## Phase 1 — Ingestion
+
+* [x] Upload validation
+* [x] File persistence
+* [x] Document metadata
+* [x] Docling parsing
+* [x] Chunking
+* [x] Embedding
+* [x] ChromaDB indexing
+
+## Phase 2 — Retrieval
+
+* [ ] Global retrieval service
+* [ ] Vector retrieval
+* [ ] BM25 retrieval
+* [ ] Hybrid retrieval
+* [ ] Reciprocal Rank Fusion
+* [ ] Top-K context selection
+* [ ] User-isolated retrieval
+
+## Phase 3 — RAG
+
+* [ ] AI query pipeline
+* [ ] Context injection
+* [ ] Document-grounded responses
+* [ ] Source citations
+* [ ] Query rewriting
+* [ ] Query expansion
+
+## Phase 4 — Conversations
+
+* [ ] Multi-turn conversations
+* [ ] Conversation memory
+* [ ] Session management
+* [ ] Streaming responses
+
+## Phase 5 — Platform
+
+* [ ] Workspace support
+* [ ] Multiple document collections
+* [ ] Permission management
+* [ ] OCR
+* [ ] Background task monitoring
+* [ ] Queue prioritization
+
+## Phase 6 — Production Infrastructure
+
+* [ ] Docker
+* [ ] CI/CD
+* [ ] Monitoring
+* [ ] Distributed deployment
+* [ ] Kubernetes
+* [ ] Production observability
+
+---
+
+# 🎯 Design Philosophy
+
+Talk2Docs is being developed with a **production-first mindset**.
+
+The project intentionally avoids putting the entire document pipeline inside a single HTTP request.
+
+Instead:
+
+```text
+FastAPI
+   │
+   ├── Authentication
+   ├── Validation
+   └── Task Dispatch
+             │
+             ▼
+          Celery
+             │
+             ├── File Processing
+             ├── Document Parsing
+             ├── Chunking
+             └── Embedding
+                     │
+                     ▼
+                 Data Layer
+                 ┌───────┐
+                 │ Postgres
+                 │ ChromaDB
+                 │ Redis
+                 └───────┘
+```
+
+The architecture prioritizes:
+
+* **Separation of concerns**
+* **Thin API routes**
+* **Asynchronous processing**
+* **Fault tolerance**
+* **User isolation**
+* **Scalability**
+* **Maintainability**
+* **AI/RAG extensibility**
+
+The long-term goal is to evolve Talk2Docs from a document-ingestion backend into a complete AI-powered document intelligence platform.
+
+---
+
+# 📜 License
 
 MIT License
 
 ---
 
-Built with ❤️ using FastAPI, Docling, Celery, LangChain, ChromaDB, PostgreSQL, and Redis.
+Built with ❤️ using **FastAPI · Celery · Docling · LangChain · ChromaDB · PostgreSQL · Redis**

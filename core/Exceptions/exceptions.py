@@ -12,12 +12,70 @@ class AppException(Exception):
 
 
 
-class UploadingException(Exception):
+class UploadingException(AppException):
     """
     If uploading fails
     """
     log_event: ExceptionLog = ExceptionLog.FILE_UPLADONG_EXCEPTION
+    
+class DocumentNotFoundException(AppException):
+    """
+    In 2nd task when tokanization process has been satrted and doc is not there
+    """
+    log_event: ExceptionLog = ExceptionLog.MISSING_DOCUMENT_EXCEPTION
+    
+    
 
+
+class SavingValidatedFileException(AppException):
+    """
+    if validated file saving to dir failed
+    """
+    log_event: ExceptionLog = ExceptionLog.VALIDATED_FILE_SAVING_EXCEPTION
+    
+
+
+class InvalidTask2PayloadException(AppException):
+    """
+    if saving validated file task didnt give task of tokenzation proper input obj->dict 
+    """
+    log_event: ExceptionLog = ExceptionLog.INVALID_TASK2_PAYLOAD
+    
+
+class InvalidTask1PayloadException(AppException):
+    """
+    if task_1 didnt get correct input obj->dict
+    """
+    log_event: ExceptionLog = ExceptionLog.INVALID_TASK1_PAYLOAD
+    
+
+    
+class TokenizationWorkerStarterException(AppException):
+    """
+    if worker 2 the parser,chunker,embedder startr fails
+    """
+    log_event: ExceptionLog = ExceptionLog.SAVING_VALIDATED_FILE_EXCEPTION
+
+class ParsingSavedFileException(AppException):
+    """
+    if parsing fails, converting document into docling obj
+    """
+    log_event: ExceptionLog = ExceptionLog.PARSING_SAVED_FILE_EXCEPTION
+
+
+class ChunkingParsedFileException(AppException):
+    """
+    if after pasing chunking fails
+    """
+    log_event: ExceptionLog = ExceptionLog.CHUNKING_PARSE_DOC_EXCEPTION
+    
+
+class EmbeddingChunkedFileException(AppException):
+    """
+    if Embedding fails and nothing is in vector db
+    """
+    log_event: ExceptionLog = ExceptionLog.EMBEDDING_CHUNKS_EXCEPTION
+    
 
 #later on this when we expand
 class AIServiceException(AppException):

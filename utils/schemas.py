@@ -167,10 +167,6 @@ class AIRequestState(str, enum.Enum):
     
 
 
-#After celery:
-class All_worker_starter_responce(BaseModel):
-    task_id: str
-    status: str = "queued"
 
 
 
@@ -195,6 +191,21 @@ class UploadTaskPayload(BaseModel):
 class passed_vlidation_reponce(BaseModel):
     file_payload: UploadTaskPayload
     file_bytes: bytes 
+
+
+#a middle man class b/w above one and bellow one!
+class DataToFrontEndAfterUploadingRoute(BaseModel):
+    request_id: str
+    user_id: int
+
+
+#After celery:
+class All_worker_starter_responce(BaseModel):
+    task_id: str
+    status: str = "queued"  
+    doc_upload_api_responce: DataToFrontEndAfterUploadingRoute
+
+
 
 
 #uploaded doc status:
@@ -233,4 +244,8 @@ class ParsedDocumentPayload(BaseModel):
     markdown_path: str
     
     
+class UploadTask2_fail_cases(str, enum.Enum):
+    PARSING = "PARSING"
+    CHUNKING = "CHUNKING"
+    EMBIDING = "EMBIDING"
     

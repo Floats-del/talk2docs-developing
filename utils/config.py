@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     
     embedding_model: str 
     
+    defualt_collection_name: str
+    
     
     #chroma_db:
     chroma_db_dir: str 

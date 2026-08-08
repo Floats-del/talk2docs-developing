@@ -3,20 +3,26 @@ from uuid import uuid4
 from fastapi import UploadFile
 import filetype
 import secrets
-from core.Exceptions.exceptions import UploadingException
+from core.Exceptions.exceptions import ChunkingParsedFileException, DocumentNotFoundException, EmbeddingChunkedFileException, ParsingSavedFileException, SavingValidatedFileException, UploadingException
 from db_tables.tables import Document
 from utils.APIResponce_error_code_enum import SYSTEM_ERROR_CODES, USER_ERROR_CODES
 from utils.config import Settings
 from docling.document_converter import DocumentConverter
-from utils.schemas import DocumentStatus, ParsedDocumentPayload, SavedDocumentPayload, TokenDataSchema, UploadTaskPayload, APIResponse, passed_vlidation_reponce
+from utils.schemas import DocumentStatus, SavedDocumentPayload, TokenDataSchema, UploadTaskPayload, APIResponse, passed_vlidation_reponce
 from sqlalchemy.ext.asyncio import AsyncSession
-from docling.chunking import HybridChunker
 from transformers import AutoTokenizer
-from langchain_core.documents import Document as LangChainDocument #coz ive Document as a db table dont want no mixing
+from langchain_core.documents import Document as LangChainDocument 
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
+from docling_core.types.doc import DoclingDocument
+from docling_core.transforms.chunker import BaseChunk
+from utils.chunker_tokanizer import chunker
+from utils.schemas import UploadTask2_fail_cases
 
 
+
+converter = DocumentConverter()
+max_tokens = Settings.tokenizer_max_tokens
 model_id = Settings.tokenizer
 tokenizer_ = AutoTokenizer.from_pretrained(model_id)
 embedding_model = HuggingFaceEmbeddings(
@@ -32,22 +38,67 @@ ALLOWED_EXTENSIONS = {
     ".docx",
     ".pptx",
     ".xlsx",
+    ".odt",
+    ".ods",
+    ".odp",
     ".txt",
+    ".text",
     ".md",
+    ".qmd",
+    ".rmd",
+    ".html",
+    ".xhtml",
+    ".adoc",     
+    ".asciidoc",
+    ".tex", 
+    ".csv",
+    ".epub",
+    ".eml",
+    ".msg",
 }
 
 ALLOWED_MIME_TYPES = {
     "application/pdf",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "text/plain",
-    "text/markdown",
+
+    # Microsoft Office
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",       # .docx
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",     # .pptx
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",             # .xlsx
+
+    # OpenDocument
+    "application/vnd.oasis.opendocument.text",           # .odt
+    "application/vnd.oasis.opendocument.spreadsheet",    # .ods
+    "application/vnd.oasis.opendocument.presentation",   # .odp
+
+    "text/plain",          # .txt, .text
+    "text/markdown",       # .md
+    "text/html",           # .html
+    "application/xhtml+xml", # .xhtml
+
+    # CSV
+    "text/csv",
+
+    # EPUB
+    "application/epub+zip",
+
+    # Email
+    "message/rfc822",      # .eml
+    "application/vnd.ms-outlook",  # .msg
+
+    # LaTeX
+    "application/x-tex",
+
+    # AsciiDoc (not standardized)
+    "text/asciidoc",
+    "text/x-asciidoc",
+
+    # Quarto / R Markdown (often uploaded as plain text)
+    "text/x-markdown",
 }
+DEFAULT_COLLECTION_NAME = Settings.defualt_collection_name
 
-DEFAULT_COLLECTION_NAME = "talk2docs"
 
-async def file_validation(file: UploadFile, user_jwt_payload: TokenDataSchema) -> APIResponse:
+async def file_validation_service(file: UploadFile, user_jwt_payload: TokenDataSchema) -> APIResponse:
     request_id = str(uuid4())
     user_id = user_jwt_payload.user_id
     
@@ -72,7 +123,7 @@ async def file_validation(file: UploadFile, user_jwt_payload: TokenDataSchema) -
         )
     except Exception:
         return APIResponse(
-            sucess=False,
+            success=False,
             data=None,
             error_code=SYSTEM_ERROR_CODES.FILE_VALIDATION_FAILED.value,
             error_message="File validation failed."
@@ -80,7 +131,7 @@ async def file_validation(file: UploadFile, user_jwt_payload: TokenDataSchema) -
     
     if not file_payload.original_filename:
         return APIResponse(
-            sucess=False,
+            success=False,
             data=None,
             error_code=USER_ERROR_CODES.UNSUPPORTED_FILE.value,
             error_message="File has no name."
@@ -89,7 +140,7 @@ async def file_validation(file: UploadFile, user_jwt_payload: TokenDataSchema) -
 
     if file_payload.file_extension not in ALLOWED_EXTENSIONS:
         return APIResponse(
-            sucess=False,
+            success=False,
             data=None,
             error_code=USER_ERROR_CODES.UNSUPPORTED_FILE.value,
             error_message="File seems sus."
@@ -97,7 +148,7 @@ async def file_validation(file: UploadFile, user_jwt_payload: TokenDataSchema) -
                 
     if file_payload.file_content_type not in ALLOWED_MIME_TYPES:
         return APIResponse(
-            sucess=False,
+            success=False,
             data=None,
             error_code=USER_ERROR_CODES.UNSUPPORTED_FILE.value,
             error_message="Invalid MIME type."
@@ -106,7 +157,7 @@ async def file_validation(file: UploadFile, user_jwt_payload: TokenDataSchema) -
     file_bytes: bytes = await file.read()
     if len(file_bytes) > MAX_FILE_SIZE:
         return APIResponse(
-            sucess=False,
+            success=False,
             data=None,
             error_code=USER_ERROR_CODES.FILE_TOO_BIG.value,
             error_message="File size is biiger than 25mb"
@@ -116,7 +167,7 @@ async def file_validation(file: UploadFile, user_jwt_payload: TokenDataSchema) -
         
         if kind is None or kind.mime != "application/pdf":
             return APIResponse(
-                sucess=False,
+                success=False,
                 data=None,
                 error_code=USER_ERROR_CODES.INAPPROPRIATE_FILE.value,
                 error_message="Fake PDF detected.."
@@ -160,105 +211,110 @@ async def save_validated_doc_task_service(payload: passed_vlidation_reponce, db:
         db.add(document)
 
         await db.commit()
-        await db.refresh(document)
+        await db.refresh(document) 
         
         document_metadata = SavedDocumentPayload.model_validate(document) 
         return document_metadata.model_dump() 
 
-    except Exception:
+    except Exception as e:
         await db.rollback()
 
         if Path(meta.file_path).exists():
             Path(meta.file_path).unlink()
+        raise SavingValidatedFileException(
+            error_code=SYSTEM_ERROR_CODES.SAVING_VALIDATED_FILE_EXCEPTION.value,
+            message="Unexpected error saving validated file in dir"
+        ) from e
 
-        raise
 
 
 
-async def parse_chunk_embed_saved_doc_task2_service(
-    doc_meta_obj: SavedDocumentPayload, db: AsyncSession
-):
-    document = await db.get(
-        Document, doc_meta_obj.doc_id
-    )  
+
+def parse_stage(document: Document) -> DoclingDocument:
+    result = converter.convert(document.file_path)
+    
+    document.status = DocumentStatus.PARSED
+    doc: DoclingDocument = result.document
+    return doc
+
+def chunking_stage(document: Document, doc: DoclingDocument) -> list[BaseChunk]:
+    chunks = list(chunker.chunk(dl_doc=doc))
+    document.chunk_count = len(chunks)
+    document.status = DocumentStatus.CHUNKED
+    return chunks
+
+def build_langchain_doc(document: Document, chunks: list[BaseChunk]) -> list[LangChainDocument]:
+    return [
+    LangChainDocument(
+        page_content=chunker.contextualize(chunk),
+        metadata={
+            "doc_id": document.doc_id,
+            "request_id": document.request_id,
+            "file_name": document.original_filename,
+            "user_id": document.user_id,
+        },
+    )
+    for chunk in chunks
+]
+
+def embeding_stage(document: Document, chunks: list[BaseChunk]):
+    docs = build_langchain_doc(document=document, chunks=chunks)
+    Chroma.from_documents(
+        documents=docs,
+        embedding=embedding_model,
+        collection_name=document.collection_name,
+        persist_directory=Settings.chroma_db_dir,
+    )
+    document.status = DocumentStatus.READY
+
+async def failed_case(document: Document, db: AsyncSession, reason: Exception, stage: str):
+    document.status = DocumentStatus.FAILED
+    document.failure_reason = f"{stage} failed: {reason}"
+    await db.commit()
+
+
+async def parse_chunk_embed_saved_doc_task2_service(doc_meta_obj: SavedDocumentPayload, db: AsyncSession):
+    document = await db.get(Document, doc_meta_obj.doc_id)  # getting the right doc for user
+    
     if document is None:
-        raise UploadingException(
+        raise DocumentNotFoundException(
             error_code=SYSTEM_ERROR_CODES.DOCUMENT_NOT_FOUND.value,
             message="Document metadata could not be found.",
         )
-
-    converter = DocumentConverter()
+        
+    #1. PARSE STAGE
     try:
-        result = converter.convert(document.file_path)
-        doc = result.document
-        document.status = DocumentStatus.PARSED
+        doc: DoclingDocument = parse_stage(document=document)
         await db.commit()
-
 
     except Exception as exc:
-        document.status = DocumentStatus.FAILED
-        document.failure_reason = f"Parsing failed: {str(exc)}"
-        await db.commit()
-
-        raise UploadingException(
+        await failed_case(document=document, db=db, reason=exc, stage=UploadTask2_fail_cases.PARSING.value)
+        raise ParsingSavedFileException(
             error_code=SYSTEM_ERROR_CODES.FILE_PARSE_EXCEPTION.value,
             message="Failed to parse uploaded document.",
         ) from exc
+
+    #2. CHUNK STAGE
     try:
-        max_tokens = Settings.tokenizer_max_tokens
-        chunker = (
-            HybridChunker( 
-                tokenizer=tokenizer_,
-                max_tokens=max_tokens,  
-                merge_peers=True,  
-            )
-        )
-        chunks = list(chunker.chunk(dl_doc=doc))
-        document.chunk_count = len(chunks)
-        document.status = DocumentStatus.CHUNKED
-
+        chunks = chunking_stage(document=document, doc=doc)
         await db.commit()
+
     except Exception as exc:
-        document.status = DocumentStatus.FAILED
-        document.failure_reason = f"Chunking failed: {str(exc)}"
-        await db.commit()
-
-        raise UploadingException(
-            error_code=SYSTEM_ERROR_CODES.FILE_PARSE_EXCEPTION.value,
+        await failed_case(document=document, db=db, reason=exc, stage=UploadTask2_fail_cases.CHUNKING.value)
+        raise ChunkingParsedFileException(
+            error_code=SYSTEM_ERROR_CODES.FILE_CHUNKING_EXCEPTION.value,
             message="Failed to chunk parsed document.",
         ) from exc
 
+
+    #3. EMBED
     try:
-        docs = [
-            LangChainDocument(
-                page_content=chunker.contextualize(chunk),
-                metadata={
-                    "doc_id": document.doc_id,
-                    "request_id": document.request_id,
-                    "file_name": document.original_filename,
-                    "user_id": document.user_id,
-                },
-            )
-            for chunk in chunks
-        ] 
-        Chroma.from_documents(
-            documents=docs,
-            embedding=embedding_model,
-            collection_name=document.collection_name,
-            persist_directory=Settings.chroma_db_dir,
-        )
-        document.status = DocumentStatus.READY
+        embeding_stage(document=document, chunks=chunks)
         await db.commit()
-        await db.refresh(
-            document
-        ) 
 
     except Exception as exc:
-        document.status = DocumentStatus.FAILED
-        document.failure_reason = f"Embedding/Indexing failed: {str(exc)}"
-        await db.commit()
-
-        raise UploadingException(
-            error_code=SYSTEM_ERROR_CODES.FILE_PARSE_EXCEPTION.value,
+        await failed_case(document=document, db=db, reason=exc, stage=UploadTask2_fail_cases.EMBIDING.value)
+        raise EmbeddingChunkedFileException(
+            error_code=SYSTEM_ERROR_CODES.FILE_EMBEDING_EXCEPTION.value,
             message="Failed to generate embeddings and index document into ChromaDB.",
         ) from exc

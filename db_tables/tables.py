@@ -14,7 +14,6 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")
-
     messages = relationship("Message", back_populates="user", cascade="all, delete-orphan")
 
 
