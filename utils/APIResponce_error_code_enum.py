@@ -19,6 +19,7 @@ class USER_ERROR_CODES(enum.Enum):
 
     #duplicate
     INPUT_ALREADY_EXISTS = "INPUT_ALREADY_EXISTS"
+    DUPLICATE_FILE = "DUPLICATE_FILE"
 
 class SYSTEM_ERROR_CODES(enum.Enum):
     #Ai related:
@@ -78,3 +79,7 @@ class SYSTEM_ERROR_CODES(enum.Enum):
     #worker input errors(upload):
     INVALID_TASK1_PAYLOAD = "INVALID_TASK1_PAYLOAD"
     INVALID_TASK2_PAYLOAD = "INVALID_TASK2_PAYLOAD"
+    
+    
+    #task
+    TASK_FAILED = "TASK_FAILED"

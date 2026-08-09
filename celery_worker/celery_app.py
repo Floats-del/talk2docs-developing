@@ -7,7 +7,7 @@ celery_app = Celery(
 )
 
 celery_app.conf.imports = (
-    "celery_worker.tasks.Ai_worker"
+    "celery_worker.Tasks.Ai_worker.ai_worker",
 )
 
 

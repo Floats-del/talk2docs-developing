@@ -9,7 +9,6 @@ from utils.schemas import APIResponse, TokenDataSchema
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-
 def get_worker_redis_status(task_id: str) -> APIResponse:
     async_result = AsyncResult(task_id, app=celery_app)
     state = async_result.state

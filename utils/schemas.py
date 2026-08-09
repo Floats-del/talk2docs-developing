@@ -36,7 +36,9 @@ class TokenDataSchema(BaseModel):
     jid: str = None
 
 
-
+class ChangePasswordInputSchema(BaseModel):
+    old_pass: str
+    new_pass: str
 
 
 
@@ -179,6 +181,7 @@ class UploadTaskPayload(BaseModel):
     stored_filename: str = Field(description=("this is the name of file we will uuid for our use"))
     file_dir: str = Field(description=("the folder name in which file will be stored! so later in same folder we can store markdown!"))
 
+    file_hash: str
     file_extension: str
     file_content_type: str
     file_path: str

@@ -1,14 +1,11 @@
 from fastapi import FastAPI, Response, status 
 import os
 import time 
-from fastapi.responses import RedirectResponse
-import db_tables.tables as tables
-from db import engine
 
-from routers.ai.clean import ai_route_copy    
+from routers.Ai import take_doc_route
 from routers.auth import auth_route
-from routers.likes import likes_route
-from routers.posts import posts_route
+# from routers.likes import likes_route
+# from routers.posts import posts_route
 from routers.users import users_routes
 
 
@@ -19,8 +16,8 @@ from contextlib import asynccontextmanager
 from redis.asyncio import Redis
 
 
-from core.exception_handlers import global_exception_handler, unexpected_exception_handler
-from core.exceptions import AppException
+from core.Exceptions.exception_handlers import global_exception_handler, unexpected_exception_handler
+from core.Exceptions.exceptions import AppException
 
 
 from slowapi import _rate_limit_exceeded_handler
@@ -71,6 +68,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 app.add_exception_handler(
+    AppException,
     global_exception_handler  
 )
 
@@ -117,11 +115,12 @@ app.add_middleware(
     allow_headers=["*"], 
 )
 
-app.include_router(router=posts_route.router)
+# app.include_router(router=posts_route.router)
 app.include_router(router=users_routes.router)
 app.include_router(router=auth_route.router)
-app.include_router(router=likes_route.router)
-app.include_router(router=ai_route_copy.router)
+app.include_router(router=take_doc_route.router)
+# app.include_router(router=likes_route.router)
+# app.include_router(router=ai_route_copy.router)
 
 
 

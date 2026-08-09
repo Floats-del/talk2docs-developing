@@ -1,7 +1,7 @@
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession 
-from db_tables.tables import UserTable
+from db_tables.tables import User
 from utils.APIResponce_error_code_enum import SYSTEM_ERROR_CODES, USER_ERROR_CODES
 from utils.hashing import verify_hashed_password
 from Oauth2 import create_access_token
@@ -33,7 +33,7 @@ async def login_user_service(user_credentials: OAuth2PasswordRequestForm, db: As
     try:
         log_state(AuthLogs.EXECUTING_DATABASE_QUERY, function="login_user_service")
         result = await db.execute(
-            select(UserTable).where(UserTable.email == user_credentials.username)
+            select(User).where(User.email == user_credentials.username)
         )
         fetched_user = result.scalar_one_or_none()
 

@@ -4,17 +4,21 @@ from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import relationship
 from sqlalchemy import Enum
 from utils.schemas import DocumentStatus
+from sqlalchemy import Boolean, text
+
 
 class User(Base):
     __tablename__ = "users"
 
     user_id = Column(Integer, primary_key=True, autoincrement=True)
-    username = Column(String(50), unique=True, nullable=False)
     email = Column(String(255), unique=True, nullable=False)
+    password = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    is_banned = Column(Boolean, nullable=False, server_default=text("false"))
 
     documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")
     messages = relationship("Message", back_populates="user", cascade="all, delete-orphan")
+
 
 
 class Document(Base):
@@ -42,7 +46,7 @@ class Document(Base):
     status = Column(Enum(DocumentStatus), default=DocumentStatus.UPLOADED, nullable=False, index=True)
 
     embedding_model = Column(String(100), nullable=True)
-    file_hash = Column(String(64), nullable=False) #so we know if a same file came again
+    file_hash = Column(String(64), nullable=False) 
 
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     processed_at = Column(DateTime(timezone=True), nullable=True)

@@ -83,6 +83,7 @@ async def revoke_all_sessions(id: int, redis: Redis = Depends(get_redis)):
 }
 
 
+
 @router.put("/admin/ban-user/{id}", status_code=status.HTTP_200_OK)
 async def ban_user(id: int, db: AsyncSession = Depends(get_db), redis: Redis = Depends(get_redis)):
     user = await db.get(User, id)
@@ -96,7 +97,7 @@ async def ban_user(id: int, db: AsyncSession = Depends(get_db), redis: Redis = D
             "message": "User already banned"
         }
     user.is_banned = True
-    await db.commit()
+    await db.commit()    
     return {
         "message": "User banned successfully"
     }

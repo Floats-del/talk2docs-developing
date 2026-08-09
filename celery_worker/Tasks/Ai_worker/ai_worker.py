@@ -3,6 +3,7 @@ from celery.result import AsyncResult
 import httpx
 from core.Exceptions.exceptions import (
 ChunkingParsedFileException, 
+DocumentNotFoundException, 
 EmbeddingChunkedFileException, 
 InvalidTask1PayloadException, 
 InvalidTask2PayloadException, 
@@ -11,7 +12,8 @@ SavingValidatedFileException,
 TokenizationWorkerStarterException
 )
 
-from db import AsyncSessionLocal
+
+from db import CelerySessionLocal 
 from routers.Ai.ai_services import save_validated_doc_task_service, parse_chunk_embed_saved_doc_task2_service
 from utils.APIResponce_error_code_enum import SYSTEM_ERROR_CODES, USER_ERROR_CODES
 from celery_worker.celery_app import celery_app
@@ -21,9 +23,10 @@ from pydantic import ValidationError
 
 
 
+
 #for task 1:
 async def save_validated_doc_task1_async(payload: passed_vlidation_reponce):
-    async with AsyncSessionLocal() as db:       
+    async with CelerySessionLocal() as db:       
         result: dict = await save_validated_doc_task_service(
             payload=payload,
             db=db
@@ -31,9 +34,10 @@ async def save_validated_doc_task1_async(payload: passed_vlidation_reponce):
         return result
 
 
+
 #task 2:
 async def parse_chunk_embed_saved_doc_task2_async(doc_meta_obj: SavedDocumentPayload):
-    async with AsyncSessionLocal() as db:
+    async with CelerySessionLocal() as db:
         await parse_chunk_embed_saved_doc_task2_service( 
             doc_meta_obj=doc_meta_obj,
             db=db
@@ -44,14 +48,13 @@ async def parse_chunk_embed_saved_doc_task2_async(doc_meta_obj: SavedDocumentPay
 #celery of task2 
 @celery_app.task(bind=True, max_retries=3, name="ai.parse_doc_worker") 
 def parse_chunk_embed_saved_doc_task2_inishiator(self, doc_meta_dict: dict):
-    try: 
+    try: #see this looks similar to how the first ever celery looked ;)
         doc_meta_obj = SavedDocumentPayload.model_validate(doc_meta_dict)
         asyncio.run( 
             parse_chunk_embed_saved_doc_task2_async(
                 doc_meta_obj
             )
-        )
-
+        )        
     except ValidationError as exc:
         raise InvalidTask2PayloadException(
             error_code=SYSTEM_ERROR_CODES.INVALID_TASK2_PAYLOAD.value,
@@ -64,7 +67,7 @@ def parse_chunk_embed_saved_doc_task2_inishiator(self, doc_meta_dict: dict):
         ConnectionError,
         ParsingSavedFileException,
         ChunkingParsedFileException,
-        EmbeddingChunkedFileException,
+        EmbeddingChunkedFileException
     ) as exc:
         raise self.retry(exc=exc, countdown=1)
 
@@ -75,8 +78,8 @@ def parse_chunk_embed_saved_doc_task2_inishiator(self, doc_meta_dict: dict):
 #celery of task 1
 @celery_app.task(bind=True, max_retries=3, name="ai.upload_save_file_worker") 
 def save_validated_doc_task(self, validated_file_data: dict):
-    try:
-        payload: passed_vlidation_reponce = passed_vlidation_reponce.model_validate(validated_file_data) 
+    try: 
+        payload: passed_vlidation_reponce = passed_vlidation_reponce.model_validate(validated_file_data) #here we go we made it object again!
         doc_meta_dict: dict = asyncio.run( 
             save_validated_doc_task1_async(
                 payload
@@ -97,11 +100,10 @@ def save_validated_doc_task(self, validated_file_data: dict):
             message="The worker received an invalid payload before entering the async wrapper, due to not getting proper pydantic obj->dict"
         ) from exc
         
-        
     except (
         httpx.TimeoutException,
         ConnectionError,
-        SavingValidatedFileException,
-        TokenizationWorkerStarterException, 
+        SavingValidatedFileException, 
+        TokenizationWorkerStarterException
     ) as exc:
         raise self.retry(exc=exc, countdown=1)

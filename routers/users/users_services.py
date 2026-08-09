@@ -1,6 +1,6 @@
 from typing import Optional
 from sqlalchemy import select
-from db_tables.tables import UserTable
+from db_tables.tables import User
 from utils.APIResponce_error_code_enum import SYSTEM_ERROR_CODES, USER_ERROR_CODES
 from utils.hashing import hash_password, verify_hashed_password
 from utils.logging.helper_log import LogState, log_state
@@ -18,7 +18,7 @@ async def create_user_service(user: UserRegisterSchema, db: AsyncSession) -> API
     try:
         log_state(UserLogs.VALIDATING_REQUEST, function="create_user_service")
         hashed_pass = hash_password(user.password)
-        new_user = UserTable(
+        new_user = User(
             email=user.email,
             password=hashed_pass
         )
@@ -95,11 +95,11 @@ async def get_Nusers_service(user_payload, db: AsyncSession, limit: int = 10, of
             )
 
         log_state(UserLogs.EXECUTING_DATABASE_QUERY, function="get_Nusers_service", user_id=user_payload.user_id)
-        stmt = select(UserTable)
+        stmt = select(User)
 
         if search:
             stmt = stmt.where(
-                UserTable.email.contains(search)
+                User.email.contains(search)
             )
 
         stmt = stmt.offset(offset).limit(limit)
@@ -144,7 +144,7 @@ async def get_user_by_id_service(user_payload, id: int, db: AsyncSession) -> API
     try:
         log_state(UserLogs.EXECUTING_DATABASE_QUERY, function="get_user_by_id_service", user_id=user_payload.user_id)
         result = await db.execute(
-            select(UserTable).where(UserTable.user_id == id)
+            select(User).where(User.user_id == id)
         )
         fetched_user = result.scalar_one_or_none()
 
@@ -199,7 +199,7 @@ async def change_passowrd_service(user_payload: TokenDataSchema, db: AsyncSessio
 
     try:
         log_state(UserLogs.FETCHING_USER, function="change_passowrd_service", user_id=user_payload.user_id)
-        stmt = select(UserTable).where(UserTable.user_id == user_id)
+        stmt = select(User).where(User.user_id == user_id)
         
         log_state(UserLogs.EXECUTING_DATABASE_QUERY, function="change_passowrd_service", user_id=user_payload.user_id)
         result = await db.execute(stmt)

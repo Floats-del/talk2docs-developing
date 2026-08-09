@@ -40,3 +40,22 @@ Base = declarative_base()
 async def get_db():
     async with AsyncSessionLocal() as session:
         yield session 
+    
+    
+
+
+#intentionally separating FastAPI request lifecycle from Celery worker lifecycle, making Celery own its DB engine.
+celery_engine = create_async_engine(
+    DATABASE_URL,
+    pool_size=5,
+    max_overflow=5,
+    pool_timeout=30,
+    pool_recycle=3600,
+)
+
+CelerySessionLocal = async_sessionmaker(
+    bind=celery_engine,
+    class_=AsyncSession,
+    autoflush=False,
+    expire_on_commit=False,
+)

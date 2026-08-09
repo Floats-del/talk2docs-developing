@@ -39,14 +39,14 @@ class InvalidTask2PayloadException(AppException):
     """
     if saving validated file task didnt give task of tokenzation proper input obj->dict 
     """
-    log_event: ExceptionLog = ExceptionLog.INVALID_TASK2_PAYLOAD
+    log_event: ExceptionLog = ExceptionLog.INVALID_TASK2_PAYLOAD_EXCEPTION
     
 
 class InvalidTask1PayloadException(AppException):
     """
     if task_1 didnt get correct input obj->dict
     """
-    log_event: ExceptionLog = ExceptionLog.INVALID_TASK1_PAYLOAD
+    log_event: ExceptionLog = ExceptionLog.INVALID_TASK1_PAYLOAD_EXCEPTION
     
 
     
