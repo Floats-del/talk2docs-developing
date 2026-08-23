@@ -1235,7 +1235,7 @@ list[LangChainDocument]
 # 📈 Current Progress
 
 ```text
-**Core Backend**
+<b>Core Backend</b>
 
 * ✅ FastAPI application
 * ✅ Async SQLAlchemy
@@ -1251,7 +1251,7 @@ list[LangChainDocument]
 * ✅ Nginx integration
 
 
-** Document Pipeline**
+<b>Document Pipeline</b>
 
 * ✅ File validation
 * ✅ File persistence
@@ -1266,7 +1266,7 @@ list[LangChainDocument]
 * ✅ Worker status polling
 
 
-**Multi-Index Architecture**
+<b>Multi-Index Architecture</b>
 
 * ✅ Raw VDB
 * ✅ Summary VDB architecture
@@ -1282,7 +1282,7 @@ list[LangChainDocument]
 * ✅ Multi-index parallel retrieval
 
 
-**Retrieval**
+<b>Retrieval</b>
 
 * ✅ Vector retrieval
 * ✅ BM25 retrieval
@@ -1300,7 +1300,7 @@ list[LangChainDocument]
 * ✅ Reranker validation and mapping
 
 
-**Answer Generation**
+<b>Answer Generation</b>
 
 * ✅ Document-grounded answers
 * ✅ Structured Pydantic output
@@ -1313,7 +1313,7 @@ list[LangChainDocument]
 ---
 # 🗺️ Roadmap
 ```
-**Phase 1: Core Backend**
+<b>Phase 1: Core Backend</b>
 
 * [x] FastAPI
 * [x] PostgreSQL
@@ -1332,7 +1332,7 @@ list[LangChainDocument]
 
 
 
-**Phase 2: Document Intelligence**
+<b>Phase 2: Document Intelligence</b>
 
 * [x] Upload validation
 * [x] File persistence
@@ -1351,7 +1351,7 @@ list[LangChainDocument]
 
 
 
-**Phase 3: Hybrid Retrieval**
+<b>Phase 3: Hybrid Retrieval</b>
 
 * [x] Vector retrieval
 * [x] BM25 retrieval
@@ -1365,7 +1365,7 @@ list[LangChainDocument]
 
 
 
-**Phase 4: Advanced RAG**
+<b>Phase 4: Advanced RAG</b>
 
 * [x] Intent classification
 * [x] Query classification
@@ -1382,7 +1382,7 @@ list[LangChainDocument]
 
 
 
-**Phase 5: Multi-Index RAG**
+<b>Phase 5: Multi-Index RAG</b>
 
 * [x] Raw VDB
 * [x] Summary VDB
@@ -1401,7 +1401,7 @@ list[LangChainDocument]
 
 
 
-**Phase 6: Retrieval Performance**
+<b>Phase 6: Retrieval Performance</b>
 
 * [x] End-to-end benchmarking
 * [x] Retrieval latency profiling
@@ -1416,7 +1416,7 @@ list[LangChainDocument]
 
 
 
-**Phase 7: Global BM25**
+<b>Phase 7: Global BM25</b>
 
 * [x] Identify corpus-wide BM25 rebuild bottleneck
 * [x] Separate BM25 from vector index lifecycle
@@ -1432,7 +1432,7 @@ list[LangChainDocument]
 
 
 
-**Phase 8: Memory**
+<b>Phase 8: Memory</b>
 
 * [ ] Short-Term Memory (STM)
 * [ ] Long-Term Memory (LTM)
@@ -1446,7 +1446,7 @@ list[LangChainDocument]
 
 
 
-**Phase 9: Production Hardening**
+<b>Phase 9: Production Hardening</b>
 
 * [ ] Complete route-level logging
 * [ ] Complete Celery lifecycle logging
