@@ -1,4 +1,4 @@
-\<div>
+<div>
 🚀 Talk2Docs**A production-oriented AI document intelligence and advanced RAG backend built with FastAPI, Celery, Docling, LangChain, ChromaDB, PostgreSQL, Redis, and multiple AI-driven retrieval techniques.**
 </div>
 
