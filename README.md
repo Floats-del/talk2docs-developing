@@ -1,23 +1,6 @@
-<div align="center">
-
-# 🚀 Talk2Docs
-**A production-oriented AI document intelligence and advanced RAG backend built with FastAPI, Celery, Docling, LangChain, ChromaDB, PostgreSQL, Redis, and multiple AI-driven retrieval techniques.**
-
-![Version](https://img.shields.io/badge/version-v1.0-blue?style=for-the-badge)
-[![Python](https://img.shields.io/badge/Python-3.12-blue?style=for-the-badge&logo=python)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.116-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-316192?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
-[![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-red?style=for-the-badge)](https://www.sqlalchemy.org/)
-[![Redis](https://img.shields.io/badge/Redis-7.0-DC382D?style=for-the-badge&logo=redis)](https://redis.io/)
-[![Celery](https://img.shields.io/badge/Celery-5.x-37814A?style=for-the-badge&logo=celery)](https://docs.celeryq.dev/)
-[![Nginx](https://img.shields.io/badge/Nginx-Reverse%20Proxy-009639?style=for-the-badge&logo=nginx)](https://nginx.org/)
-[![Cohere](https://img.shields.io/badge/Cohere-Encoder%20Reranking-39594D?style=for-the-badge&logo=cohere)](https://cohere.com/)
-[![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
-
+\<div>
+🚀 Talk2Docs**A production-oriented AI document intelligence and advanced RAG backend built with FastAPI, Celery, Docling, LangChain, ChromaDB, PostgreSQL, Redis, and multiple AI-driven retrieval techniques.**
 </div>
-
-
-
 
 Talk2Docs is an asynchronous, user-isolated document intelligence platform
 that transforms uploaded documents into searchable knowledge and generates
@@ -342,7 +325,6 @@ Each raw chunk can produce three retrieval representations:
 
 **Explanation**
 
-
 All representations preserve the same `chunk_id`.
 This allows secondary indexes to improve retrieval recall while the final
 answer-generation stage resolves results back to the original raw chunk.
@@ -448,7 +430,6 @@ rather than relying exclusively on one retrieval method.
 
 ---
 
-
 # ⚡ Global BM25 Architecture
 
 Talk2Docs separates the **lexical retrieval index** from the vector database lifecycle.
@@ -518,14 +499,8 @@ Lexical Retrieval
 
 The two are then combined through the hybrid ensemble retriever.
 ```
----
 
-
-
-
-
-
-
+***
 
 # 🧭 AI Query Pipeline
 The most important part of Talk2Docs is what happens **after the user asks a question**.
@@ -607,9 +582,6 @@ The original standalone intent-classification implementation is retained as:
 
 for reference and comparison.
 
-
-
-
 ---
 
 ## 🧠 Retrieval Techniques
@@ -622,11 +594,8 @@ for reference and comparison.
 | Translation | Transforms queries into retrieval-friendly representations |
 | Decomposition | Breaks complex questions into independently retrievable sub-questions |
 | Multi-Index | Searches raw, summary and explanation representations |
----
 
-
-
-
+***
 
 # 🎯 AI Reranking
 
@@ -666,9 +635,8 @@ The current encoder implementation is located in:
 >**re_rank_via_encoder.py**
 
 The project also preserves the original manual AI reranking implementation in:
->**rank_docs_manual.py**
 
-
+> **rank\_docs\_manual.py**
 
 ---
 
@@ -778,8 +746,6 @@ class AnswerModel(BaseModel):
     confidence_score: float = Field(ge=0.0, le=1.0)
     is_meaning_preserved: bool
 ```
-
-
 
 # 📌 Example Answer
 
@@ -965,9 +931,6 @@ Query
 
 Benchmark status: Current results use a single-document corpus. Multi-document, larger-corpus, and load-oriented benchmarks are still in progress.
 
-
-
-
 ---
 # 🔐 Authentication & Security
 
@@ -1018,7 +981,6 @@ Rate limiting protects sensitive endpoints from excessive requests and provides 
 
 ---
 
-
 ### ChromaDB
 
 Used for:
@@ -1028,9 +990,6 @@ Used for:
 * Explanation representations
 
 ---
-
-
-
 
 # 📡 Worker Status Polling
 
@@ -1066,8 +1025,6 @@ Example:
 This prevents transient Celery state from being mistaken for persistent document state.
 
 ---
-
-
 
 AI services also use structured `APIResponse` objects to distinguish:
 
@@ -1132,8 +1089,6 @@ Use   Repair
 ```
 
 ---
-
-
 
 # 📁 Project Structure
 
@@ -1248,8 +1203,8 @@ Talk2Docs/
 - **Centralized exception handling**
 - **Celery worker lifecycle tracking**
 - **Persistent document and multi-index status tracking**
----
 
+***
 
 # 🧪 Engineering Principles
 
@@ -1278,8 +1233,9 @@ list[LangChainDocument]
 ---
 
 # 📈 Current Progress
+
 ```text
-## Core Backend
+**Core Backend**
 
 * ✅ FastAPI application
 * ✅ Async SQLAlchemy
@@ -1294,7 +1250,8 @@ list[LangChainDocument]
 * ✅ Structured logging
 * ✅ Nginx integration
 
-## Document Pipeline
+
+** Document Pipeline**
 
 * ✅ File validation
 * ✅ File persistence
@@ -1308,7 +1265,8 @@ list[LangChainDocument]
 * ✅ Celery retry handling
 * ✅ Worker status polling
 
-## Multi-Index Architecture
+
+**Multi-Index Architecture**
 
 * ✅ Raw VDB
 * ✅ Summary VDB architecture
@@ -1323,7 +1281,8 @@ list[LangChainDocument]
 * ✅ Parallel secondary retriever construction
 * ✅ Multi-index parallel retrieval
 
-## Retrieval
+
+**Retrieval**
 
 * ✅ Vector retrieval
 * ✅ BM25 retrieval
@@ -1340,7 +1299,8 @@ list[LangChainDocument]
 * ✅ AI reranking
 * ✅ Reranker validation and mapping
 
-## Answer Generation
+
+**Answer Generation**
 
 * ✅ Document-grounded answers
 * ✅ Structured Pydantic output
@@ -1349,11 +1309,11 @@ list[LangChainDocument]
 * ✅ Confidence scoring
 * ✅ Meaning-preservation signal
 
+```
 ---
-
 # 🗺️ Roadmap
-
-## Phase 1 — Core Backend
+```
+**Phase 1: Core Backend**
 
 * [x] FastAPI
 * [x] PostgreSQL
@@ -1370,9 +1330,9 @@ list[LangChainDocument]
 * [x] Structured logging
 * [x] Nginx reverse proxy
 
----
 
-## Phase 2 — Document Intelligence
+
+**Phase 2: Document Intelligence**
 
 * [x] Upload validation
 * [x] File persistence
@@ -1389,9 +1349,9 @@ list[LangChainDocument]
 * [x] Failure handling
 * [x] Retry handling
 
----
 
-## Phase 3 — Hybrid Retrieval
+
+**Phase 3: Hybrid Retrieval**
 
 * [x] Vector retrieval
 * [x] BM25 retrieval
@@ -1403,9 +1363,9 @@ list[LangChainDocument]
 * [x] Async retrieval optimization
 * [x] Retrieval benchmarking
 
----
 
-## Phase 4 — Advanced RAG
+
+**Phase 4: Advanced RAG**
 
 * [x] Intent classification
 * [x] Query classification
@@ -1420,9 +1380,9 @@ list[LangChainDocument]
 * [x] Candidate validation
 * [x] Top-K selection
 
----
 
-## Phase 5 — Multi-Index RAG
+
+**Phase 5: Multi-Index RAG**
 
 * [x] Raw VDB
 * [x] Summary VDB
@@ -1439,9 +1399,9 @@ list[LangChainDocument]
 * [x] Parallel multi-index retrieval
 * [x] Raw chunk resolution
 
----
 
-## Phase 6 — Retrieval Performance
+
+**Phase 6: Retrieval Performance**
 
 * [x] End-to-end benchmarking
 * [x] Retrieval latency profiling
@@ -1454,9 +1414,9 @@ list[LangChainDocument]
 * [x] Model/provider benchmarking
 * [x] Multi-index latency benchmarking
 
----
 
-## Phase 7 — Global BM25
+
+**Phase 7: Global BM25**
 
 * [x] Identify corpus-wide BM25 rebuild bottleneck
 * [x] Separate BM25 from vector index lifecycle
@@ -1470,9 +1430,9 @@ list[LangChainDocument]
 * [ ] Benchmark large user libraries
 * [ ] Investigate true incremental TF/DF updates
 
----
 
-## Phase 8 — Memory
+
+**Phase 8: Memory**
 
 * [ ] Short-Term Memory (STM)
 * [ ] Long-Term Memory (LTM)
@@ -1484,9 +1444,9 @@ list[LangChainDocument]
 * [ ] Memory summarization
 * [ ] Context-aware answer generation
 
----
 
-## Phase 9 — Production Hardening
+
+**Phase 9: Production Hardening**
 
 * [ ] Complete route-level logging
 * [ ] Complete Celery lifecycle logging
@@ -1505,9 +1465,8 @@ list[LangChainDocument]
 * [ ] Monitoring
 * [ ] Load testing
 ```
+
 ---
-
-
 
 # 🏁 Architecture at a Glance
 
@@ -1516,7 +1475,7 @@ pipelines: asynchronous document ingestion and adaptive question answering.
 
 ```text
 ┌───────────────────────────────────────────────────────────────┐
-│                       DOCUMENT PIPELINE                        │
+│                       DOCUMENT PIPELINE                       │
 └───────────────────────────────────────────────────────────────┘
 
 User Upload
@@ -1550,7 +1509,7 @@ Embeddings
 
 
 ┌───────────────────────────────────────────────────────────────┐
-│                       QUESTION PIPELINE                        │
+│                       QUESTION PIPELINE                       │
 └───────────────────────────────────────────────────────────────┘
 
 User Question
@@ -1628,7 +1587,6 @@ MIT License
 ---
 
 Built with ❤️ using:
-=
 
 **FastAPI · Celery · Docling · LangChain · ChromaDB · PostgreSQL · Redis ·
 Pydantic · Sentence Transformers · Cohere**
