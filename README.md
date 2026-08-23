@@ -1,6 +1,23 @@
-<div>
-🚀 Talk2Docs**A production-oriented AI document intelligence and advanced RAG backend built with FastAPI, Celery, Docling, LangChain, ChromaDB, PostgreSQL, Redis, and multiple AI-driven retrieval techniques.**
+<div align="center">
+
+# 🚀 Talk2Docs
+
+**A production-oriented AI document intelligence and advanced RAG backend built with FastAPI, Celery, Docling, LangChain, ChromaDB, PostgreSQL, Redis, and multiple AI-driven retrieval techniques.**
+
+![Version](https://img.shields.io/badge/version-v1.0-blue?style=for-the-badge)
+[![Python](https://img.shields.io/badge/Python-3.12-blue?style=for-the-badge&logo=python)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.116-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-316192?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
+[![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-red?style=for-the-badge)](https://www.sqlalchemy.org/)
+[![Redis](https://img.shields.io/badge/Redis-7.0-DC382D?style=for-the-badge&logo=redis)](https://redis.io/)
+[![Celery](https://img.shields.io/badge/Celery-5.x-37814A?style=for-the-badge&logo=celery)](https://docs.celeryq.dev/)
+[![Nginx](https://img.shields.io/badge/Nginx-Reverse%20Proxy-009639?style=for-the-badge&logo=nginx)](https://nginx.org/)
+[![Cohere](https://img.shields.io/badge/Cohere-Encoder%20Reranking-39594D?style=for-the-badge&logo=cohere)](https://cohere.com/)
+[![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+
 </div>
+
+---
 
 Talk2Docs is an asynchronous, user-isolated document intelligence platform
 that transforms uploaded documents into searchable knowledge and generates
