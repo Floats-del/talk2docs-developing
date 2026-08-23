@@ -10,11 +10,7 @@ import enum
 
 
 
-class LogState(enum.Enum):
-    INFO = "info"
-    WARNING = "warning"
-    EXCEPTION = "exception"
-    ERROR = "error"
+from utils.schemas import LogState
 
 def log_state(event: BaseLogEvent, level: LogState = LogState.INFO, function: str = "get_user_intent", exc=None, request_id: str = None, user_id: int = None, route: str = None):
     ctx = LogContext(

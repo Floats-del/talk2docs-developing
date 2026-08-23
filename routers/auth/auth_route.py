@@ -38,7 +38,7 @@ async def logOut_all(request: Request, response: Response, user_payload: TokenDa
     return handle_service_response(result, LogoutAllDeviServiceException)
 
 
-#how many active sessions -> user can ask this 
+
 @router.get("/sessions")
 @limiter.limit(RateLimits.Session.COUNT_ACTIVE)
 async def get_active_sessions(request: Request, response: Response, user_payload: TokenDataSchema = Depends(get_user_jwt_payload), redis: Redis = Depends(get_redis)):
@@ -58,7 +58,7 @@ async def revoke_current_session(request: Request, response: Response, user_payl
 
 
 
-#admin only routes:
+
 @router.get('/admin/get_all_active_sessions_by_id/{id}')
 async def get_all_active_sessions(id: int, redis: Redis = Depends(get_redis)):
     sessions = await redis.scard(f"user_sessions:{id}")
@@ -74,13 +74,15 @@ async def revoke_all_sessions(id: int, redis: Redis = Depends(get_redis)):
 
     if session_ids:
         for jid in session_ids:
-            await redis.delete(f"session:{jid}") #delete all jid
-        await redis.delete(f"user_sessions:{id}") #delete the set holding jids
+            await redis.delete(f"session:{jid}") 
+        await redis.delete(f"user_sessions:{id}") 
     
     else:
         return {
     "message": "No active sessions found."
 }
+
+
 
 
 
@@ -97,7 +99,14 @@ async def ban_user(id: int, db: AsyncSession = Depends(get_db), redis: Redis = D
             "message": "User already banned"
         }
     user.is_banned = True
-    await db.commit()    
+    await db.commit()
+    
+    
+    
+    
+    
+    
+    
     return {
         "message": "User banned successfully"
     }

@@ -2,6 +2,7 @@ import logging
 from utils.schemas import LogContext
 logger = logging.getLogger("ai_saas")
 
+
 def log_info(context: LogContext):
     logger.info(
         context.event.value,

@@ -252,3 +252,25 @@ class UploadTask2_fail_cases(str, enum.Enum):
     CHUNKING = "CHUNKING"
     EMBIDING = "EMBIDING"
     
+
+
+
+#quertion route:
+class QuestionRequest(BaseModel):
+    question: str
+    doc_name: list[str] | None = None 
+
+
+
+class MultiIndexStatus(str, enum.Enum):
+    PENDING = "pending"
+    PROCESSING = "processing"
+    READY = "ready"
+    FAILED = "failed"
+
+
+class LogState(enum.Enum):
+    INFO = "info"
+    WARNING = "warning"
+    EXCEPTION = "exception"
+    ERROR = "error"

@@ -1,4 +1,3 @@
-from langsmith import traceable
 from langchain_core.exceptions import OutputParserException 
 from typing import List
 
@@ -42,7 +41,6 @@ def clean_json_string(raw_str):
 
 
 
-@traceable(name="safe_parse_3Retry_one")
 async def safe_parse(raw_output, parser, llm, query, max_retries=3) -> object | None:
     output = raw_output 
 
@@ -95,3 +93,5 @@ async def safe_parse(raw_output, parser, llm, query, max_retries=3) -> object | 
                 if check_provider_quota(e):
                     return None
     return None
+
+

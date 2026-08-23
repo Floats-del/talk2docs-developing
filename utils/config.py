@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     #chroma_db:
     chroma_db_dir: str 
     
+    
+    
+    #reranker
+    cohere_api_key: str
+    cohere_rerank_model: str
+    
     # Configures Pydantic to read automatically from local filesystem
     model_config = SettingsConfigDict(env_file=".env")
 

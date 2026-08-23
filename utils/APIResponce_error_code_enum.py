@@ -83,3 +83,23 @@ class SYSTEM_ERROR_CODES(enum.Enum):
     
     #task
     TASK_FAILED = "TASK_FAILED"
+    
+    
+    #vectordb related:
+    NO_RELATED_VECTOR_DATABASE_FOUND = "NO_RELATED_VECTOR_DATABASE_FOUND"
+    
+    
+    #retriver realted:
+    NO_DATA_FOUND_BY_RETRIVER = "NO_DATA_FOUND_BY_RETRIVER"
+    
+    
+    #reranker
+    NO_DATA_WAS_SENT_TO_RANKER = "NO_DATA_WAS_SENT_TO_RANKER"
+    
+    
+    #retriver in hyde:
+    HYDE_RETRIVER_FAILURE = "HYDE_RETRIVER_FAILURE"
+    
+    
+    #RRF:
+    RRF_FALIURE = "RRF_FALIURE"

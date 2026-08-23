@@ -15,7 +15,7 @@ from db import get_db
 from utils.ai_responce_handler import handle_service_response
 from utils.schemas import All_worker_starter_responce, TokenDataSchema, APIResponse, DataToFrontEndAfterUploadingRoute, passed_vlidation_reponce
 from sqlalchemy.ext.asyncio import AsyncSession
-from routers.Ai.doc_verification_utils import upload_doc_worker_inishiator
+from routers.Ai.doc_verification_utils import multi_index_db_creation_worker_inishiator, upload_doc_worker_inishiator
 from routers.Ai.ai_services import file_validation_service
 
 router = APIRouter(prefix="/upload", tags=["Upload"])
@@ -43,4 +43,19 @@ async def upload_doc(
 @router.get("/upload_worker/{task_id}/{request_id}")
 async def get_upload_worker_result(task_id: str, request_id: str, db: AsyncSession = Depends(get_db), user_jwt_payload: TokenDataSchema = Depends(get_user_jwt_payload)):
     result: APIResponse = await redis_and_db_worker_status(task_id=task_id, request_id=request_id, db=db, user_jwt_payload=user_jwt_payload)
-    return result.data
+    result_data: dict = result.data
+    
+    
+    two_vdb_task_id: APIResponse = await multi_index_db_creation_worker_inishiator(user_id=user_jwt_payload.user_id, request_id=request_id, db=db)
+    if two_vdb_task_id.data:
+        
+        
+        two_vdb_data: dict = two_vdb_task_id.data 
+        return result_data | {
+            "multi_index": two_vdb_data
+            } 
+    
+    
+    return result_data 
+
+

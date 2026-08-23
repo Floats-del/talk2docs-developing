@@ -3,7 +3,7 @@ from db import Base
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import relationship
 from sqlalchemy import Enum
-from utils.schemas import DocumentStatus
+from utils.schemas import DocumentStatus, MultiIndexStatus
 from sqlalchemy import Boolean, text
 
 
@@ -17,6 +17,7 @@ class User(Base):
     is_banned = Column(Boolean, nullable=False, server_default=text("false"))
 
     documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")
+
     messages = relationship("Message", back_populates="user", cascade="all, delete-orphan")
 
 
@@ -43,10 +44,15 @@ class Document(Base):
     mime_type = Column(String(100), nullable=False)
 
     failure_reason = Column(Text, nullable=True)
+    
+    
     status = Column(Enum(DocumentStatus), default=DocumentStatus.UPLOADED, nullable=False, index=True)
+    
+    summary_vdb_status = Column(Enum(MultiIndexStatus), default=MultiIndexStatus.PENDING, nullable=False, index=True)
+    explanation_vdb_status = Column(Enum(MultiIndexStatus), default=MultiIndexStatus.PENDING, nullable=False, index=True)
 
     embedding_model = Column(String(100), nullable=True)
-    file_hash = Column(String(64), nullable=False) 
+    file_hash = Column(String(64), nullable=False) #so we know if a same file came again
 
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     processed_at = Column(DateTime(timezone=True), nullable=True)

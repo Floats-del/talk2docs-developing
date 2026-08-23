@@ -7,9 +7,10 @@ from routers.auth import auth_route
 # from routers.likes import likes_route
 # from routers.posts import posts_route
 from routers.users import users_routes
+from routers.chat import question_route  
 
 
-
+from fastapi import FastAPI, Response, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 
 from contextlib import asynccontextmanager
@@ -55,11 +56,22 @@ app = FastAPI(
 
 #shows ms in swagger
 @app.middleware("http")
-async def add_process_time_header(request, call_next):
+async def add_process_time_header(request: Request, call_next):
     start_time = time.perf_counter()
+
+    print(
+        f"[REQUEST START] {request.method} {request.url.path} "
+        f"client={request.client.host if request.client else None}"
+    )
+
     response: Response = await call_next(request)
     process_time_ms = (time.perf_counter() - start_time) * 1000
     response.headers["X-Process-Time-Ms"] = f"{process_time_ms:.2f} ms"
+    print(
+        f"[REQUEST END] {request.method} {request.url.path} "
+        f"status={response.status_code} "
+        f"time={process_time_ms:.2f}ms"
+    )
     return response
 
 
@@ -92,7 +104,7 @@ origins = [
     "http://localhost:4200",
     "http://127.0.0.1:4200",
 
-    "http://10.0.2.2:8000",  #
+    "http://10.0.2.2:8000",  
 
     "https://www.yourdomain.com",
     "https://yourdomain.com",
@@ -100,27 +112,26 @@ origins = [
 ]
 from utils.config import settings
 import os
-os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ["LANGCHAIN_API_KEY"] = settings.api_key
-os.environ["LANGCHAIN_PROJECT"] = "fastapi-ai-blog"
+os.environ["LANGCHAIN_TRACING_V2"] = "false"
+
 
 
 
 
 app.add_middleware(
     CORSMiddleware, 
-    allow_origins=origins, 
+    allow_origins=["*"], # Temporarily allow all origins to test
     allow_credentials=True, 
     allow_methods=["*"], 
     allow_headers=["*"], 
 )
 
-# app.include_router(router=posts_route.router)
+
 app.include_router(router=users_routes.router)
 app.include_router(router=auth_route.router)
 app.include_router(router=take_doc_route.router)
-# app.include_router(router=likes_route.router)
-# app.include_router(router=ai_route_copy.router)
+app.include_router(router=question_route.router)
+
 
 
 

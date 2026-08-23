@@ -10,10 +10,12 @@ tokenizer_ = AutoTokenizer.from_pretrained(model_id)
 
 
 
+
 chunker = (
     HybridChunker(  
+        
         tokenizer=tokenizer_,
-        max_tokens=max_tokens, 
-        merge_peers=True,  #
+        max_tokens=max_tokens,  
+        merge_peers=True,  
     )
 )

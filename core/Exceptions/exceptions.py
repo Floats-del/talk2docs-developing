@@ -163,3 +163,9 @@ class LikeServiceException(AppException):
 class UserCreationServiceException(AppException):
     log_event: ExceptionLog = ExceptionLog.USER_CREATION_EXCEPTION
     
+
+class NoVectorDatabaseException(AppException):
+    """
+    user doesnt have a vector database yet
+    """
+    log_event: ExceptionLog = ExceptionLog.MISSING_VECTOR_DATABASE_EXCEPTION
